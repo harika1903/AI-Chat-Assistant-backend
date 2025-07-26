@@ -3,27 +3,28 @@ from fastapi import FastAPI, Query
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 import os
-from groq import Groq
+# --- NEW: Import the correct Asynchronous client ---
+from groq import AsyncGroq
 
 # --- FastAPI App Initialization ---
 app = FastAPI()
 
 # --- CORS Configuration ---
-# This allows your frontend (on GitHub Pages) to communicate with your backend (on Render).
+# This allows your frontend to talk to your backend.
 origins = ["*"] # Allows all origins for simplicity
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"], # Allows all methods (GET, POST, etc.)
-    allow_headers=["*"], # Allows all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-# --- Initialize Groq Client ---
+# --- NEW: Initialize the Asynchronous Groq Client ---
 # The API key will be read from the environment variable we set on Render.
 try:
-    client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
+    client = AsyncGroq(api_key=os.environ.get("GROQ_API_KEY"))
 except Exception as e:
     print(f"Error initializing Groq client: {e}")
     client = None
@@ -41,7 +42,7 @@ async def chat(prompt: str = Query(..., description="User prompt for AI model"))
             return
 
         try:
-            # Use Groq's streaming API
+            # Use Groq's streaming API with the async client
             stream = await client.chat.completions.create(
                 messages=[
                     {
